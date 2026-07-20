@@ -104,7 +104,9 @@ class Cerebellum:
         Returns one of the keys in TIMING_MAP.
         """
         q = query.lower()
-        if any(w in q for w in ["hi", "hello", "hey", "good morning", "good evening"]):
+        tokens = set(re.findall(r"\b\w+\b", q))
+        greetings = {"hi", "hello", "hey", "yo", "sup"}
+        if (tokens & greetings) or any(phrase in q for phrase in ["good morning", "good evening", "good afternoon"]):
             return "greeting"
         if any(op in q for op in ["+", "-", "*", "/", "calculate", "solve", "equation"]):
             return "math"
