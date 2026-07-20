@@ -67,6 +67,16 @@ def custom_create_app(cls, *args, **kwargs):
         allow_headers=["*"],
     )
     
+    # Disable caching for BICA routes to force client update and bypass CDN/browser caches
+    @app.middleware("http")
+    async def add_no_cache_headers(request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith(("/ui", "/home", "/bica")):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+    
     # Register BICA dreamer lifecycle event handlers
     @app.on_event("startup")
     async def startup_event():
@@ -94,7 +104,7 @@ def dummy_gpu_fn():
 
 # ── Build Gradio demo ─────────────────────────────────────────────────────────
 with gr.Blocks(title="BICA v3 Active", css="footer {visibility: hidden}") as demo:
-    gr.HTML("<iframe src='/ui/index.html' style='width: 100%; height: 950px; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'></iframe>")
+    gr.HTML("<iframe src='/home' style='width: 100%; height: 950px; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'></iframe>")
 
     # Hidden button to satisfy ZeroGPU static event-handler analyzer
     dummy_btn = gr.Button("GPU Init", visible=False)
