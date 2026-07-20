@@ -309,6 +309,23 @@ async def _chat_endpoint_inner(req: ChatRequest, background_tasks: BackgroundTas
 
     # Route with emotion_tag so emotional_load feeds into thalamic salience
     path, salience = thal.route(msg, nm_state=nm_state, emotion_tag=emotion_tag)
+    
+    # Override REFLEX path if it's a follow-up query to prevent losing context
+    is_follow_up = False
+    msg_l = msg.lower().strip()
+    follow_up_indicators = ["in short", "briefly", "why", "how so", "elaborate", "summarize", 
+                            "rephrase", "more detail", "explain further", "give me", "tell me more"]
+    if any(ind in msg_l for ind in follow_up_indicators):
+        is_follow_up = True
+    else:
+        wm_history = wm.assemble_context(sid)
+        if len(msg.split()) <= 4 and len(wm_history) > 0:
+            is_follow_up = True
+            
+    if is_follow_up and path == "REFLEX":
+        path = "DEEP"
+        pipeline_trace.append({"region": "ThalamusOverride", "reason": "follow_up_context"})
+
     pipeline_trace.insert(0, {"region": "Thalamus", "path": path,
                                "salience": salience["salience"],
                                "emotional_load": salience.get("emotional_load", 0.0)})
