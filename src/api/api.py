@@ -355,18 +355,26 @@ async def _chat_endpoint_inner(req: ChatRequest, background_tasks: BackgroundTas
 
     pipeline_trace.append({"region": "ProceduralMemory", "hit": False})
 
-    # ── REFLEX (no habit) — handle greetings directly ────────────────────────
+    # ── REFLEX (no habit) — handle greetings and brief follow-ups ────────────
     if path == "REFLEX":
         nm.on_familiar_input(sid)
         gen_params = nm.get_generation_params(sid)
         # Combine default tone with Theory of Mind calibration
         tone = tom_profile.get("tone", gen_params.get("tone", "friendly and clear"))
-        # Simple direct generation for greetings
+        
+        # Assemble working memory context to preserve conversation history
+        wm_context = wm.assemble_context(sid, norepinephrine=nm_state.get("norepinephrine", 0.5))
+        
         from generate import generate_text_api
         msgs = [
-            {"role": "system", "content": f"You are a {tone} AI assistant. Reply naturally and briefly. {tom_profile['depth']}"},
-            {"role": "user", "content": msg}
+            {"role": "system", "content": f"You are a {tone} AI assistant. Reply naturally and briefly. {tom_profile['depth']}"}
         ]
+        # Insert working memory context (up to last 2 turns)
+        for c in wm_context[-2:]:
+            msgs.append({"role": c["role"], "content": c["content"]})
+        # Append current user message
+        msgs.append({"role": "user", "content": msg})
+        
         response = generate_text_api(msgs, max_new_tokens=80,
                                       temperature=gen_params["temperature"],
                                       top_p=gen_params["top_p"],
