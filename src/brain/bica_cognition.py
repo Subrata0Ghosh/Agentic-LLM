@@ -286,7 +286,8 @@ class BICACognition:
                         issues.append("Possible yes/no contradiction detected near key entity.")
 
         # ── 3. Completeness — were query goals addressed? ─────────────────────
-        if perception["primary_goal"]:
+        is_math_query = len(re.findall(r"\d+", query_l)) >= 1 and any(op in query_l for op in ["+", "-", "*", "/", "=", "^", "solve", "calculate"])
+        if perception["primary_goal"] and not is_math_query:
             goal = perception["primary_goal"]
             # If the goal word (e.g. "compare") appears in query but response is very short
             if goal in query_l and len(response.split()) < 20:
@@ -296,6 +297,33 @@ class BICACognition:
         for pattern, explanation in _IMPOSSIBLE:
             if re.search(pattern, response_l):
                 issues.append(f"Commonsense violation in response: {explanation}")
+
+        # ── 5. Neural Logical Verification Check ────────────────────────────────
+        # Ask the model as an independent critic to verify the response logic
+        try:
+            from generate import generate_text_api
+            critique_msgs = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an independent logical verification processor. "
+                        "Read the question and the proposed answer. Check for logic errors, "
+                        "commonsense violations, factual mistakes, or accepting false premises. "
+                        "If the proposed answer is correct and logical, reply with only 'PASSED'. "
+                        "Otherwise, write a brief 1-sentence description of the logical flaw."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Question: {query}\nAnswer: {response}"
+                }
+            ]
+            critique_res = generate_text_api(critique_msgs, max_new_tokens=60, temperature=0.1)
+            critique_clean = critique_res.strip()
+            if "PASSED" not in critique_clean.upper() and len(critique_clean) > 3:
+                issues.append(f"Logic flaw detected: {critique_clean}")
+        except Exception:
+            pass
 
         passed = len(issues) == 0
         return {
