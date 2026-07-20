@@ -1,0 +1,14 @@
+torch
+transformers
+fastapi<0.113.0
+starlette<0.39.0
+uvicorn
+beautifulsoup4
+requests
+chromadb
+sentence-transformers
+arxiv
+ddgs
+nltk
+gradio==4.44.1
+huggingface_hub==0.23.2

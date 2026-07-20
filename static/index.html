@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BICA v3 — Biologically-Inspired Cognitive Architecture</title>
+  <meta name="description" content="BICA v3: A human-brain-mimicking AI with neuromodulators, hippocampal memory, basal ganglia gating, cerebellum timing, and live cognitive visualization." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <style>
+    /* ── Design Tokens ─────────────────────────────────── */
+    :root {
+      --bg:        #04060f;
+      --bg2:       #080c1a;
+      --bg3:       #0d1225;
+      --glass:     rgba(8,12,26,0.82);
+      --glass-b:   rgba(80,120,255,0.09);
+      --glass-h:   rgba(80,120,255,0.17);
+      --text:      #dde3f5;
+      --text-dim:  #6a7494;
+      --text-mid:  #98a4c8;
+      --accent:    #4e8cff;
+      --accent2:   #8b52ff;
+      --accent3:   #00d4aa;
+      --green:     #00e5a0;
+      --yellow:    #ffc94d;
+      --red:       #ff4d6d;
+      --orange:    #ff7a3d;
+      --pink:      #ff5eb0;
+      --border:    rgba(255,255,255,0.06);
+      --border-h:  rgba(78,140,255,0.3);
+      --mono:      'JetBrains Mono', monospace;
+      --r:         10px;
+      --r-sm:      6px;
+    }
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(255,255,255,0.1) transparent;
+    }
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      background:var(--bg);
+      background-image:
+        radial-gradient(ellipse at 10% 5%,rgba(78,140,255,0.10) 0,transparent 50%),
+        radial-gradient(ellipse at 90% 95%,rgba(139,82,255,0.09) 0,transparent 50%),
+        radial-gradient(ellipse at 50% 50%,rgba(0,212,170,0.03) 0,transparent 60%);
+      color:var(--text);
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* ── Scrollbar ─────────────────────────────────────── */
+    *::-webkit-scrollbar{width:6px;height:6px;}
+    *::-webkit-scrollbar-track{background:transparent;}
+    *::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px;}
+    *::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.25);}
+
+    /* ── Top Bar ──────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(4,6,15,0.95);
+      backdrop-filter: blur(24px);
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .topbar-header-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 0 18px rgba(78, 140, 255, 0.35);
+    }
+    .logo h1 {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      margin-top: 1px;
+    }
+    .topbar-pills {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+    .pill{
+      padding:4px 12px;border-radius:20px;
+      font-size:10.5px;font-weight:600;font-family:var(--mono);
+      border:1px solid var(--border-h);
+      background:rgba(78,140,255,0.08);color:var(--accent);
+      cursor:pointer;transition:all .2s;white-space:nowrap;
+    }
+    .pill:hover{background:rgba(78,140,255,0.18);}
+    .pill.purple{background:rgba(139,82,255,0.1);color:var(--accent2);border-color:rgba(139,82,255,0.28);}
+    .pill.purple:hover{background:rgba(139,82,255,0.2);}
+    .pill.green{background:rgba(0,229,160,0.08);color:var(--green);border-color:rgba(0,229,160,0.25);}
+    .pill.red{background:rgba(255,77,109,0.1);color:var(--red);border-color:rgba(255,77,109,0.28);}
+    .dreamer-pill{
+      display:flex;align-items:center;gap:5px;
+      font-family:var(--mono);font-size:10px;
+      padding:3px 9px;border-radius:12px;
+      background:rgba(255,255,255,0.04);border:1px solid var(--border);
+      cursor:pointer;
+    }
+    .d-dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);}
+    .dreamer-pill.active .d-dot{background:var(--green);box-shadow:0 0 7px var(--green);animation:blink 1.5s infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+    /* ── Main Layout ──────────────────────────────────── */
+    .main{
+      display:grid;
+      grid-template-columns:260px 1fr 320px;
+      flex:1;overflow:hidden;
+    }
+
+    /* ── Panel Base ───────────────────────────────────── */
+    .panel{
+      background:var(--glass);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;overflow:hidden;
+    }
+    .panel:last-child{border-right:none;border-left:1px solid var(--border);}
+    .ph{
+      padding:12px 14px 10px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:8px;flex-shrink:0;
+    }
+    .ph .dot{width:7px;height:7px;border-radius:50%;animation:blink 2s infinite;}
+    .ph-title{font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text-dim);}
+    .ph-tabs{display:flex;gap:4px;margin-left:auto;}
+    .ph-tab{
+      font-size:9.5px;font-family:var(--mono);padding:2px 8px;border-radius:10px;
+      cursor:pointer;color:var(--text-dim);transition:all .2s;
+    }
+    .ph-tab.active{background:rgba(78,140,255,0.15);color:var(--accent);}
+    .pb{flex:1;overflow-y:auto;padding:10px 12px;scrollbar-width:thin;}
+
+    /* ── Brain Canvas Panel ───────────────────────────── */
+    #brainCanvas{
+      display:block;width:100%;
+      border-radius:var(--r);
+      margin-bottom:10px;
+    }
+    .region-list{display:flex;flex-direction:column;gap:5px;margin-top:4px;}
+    .region-item{
+      display:flex;align-items:center;gap:9px;
+      padding:7px 9px;border-radius:var(--r-sm);
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.02);
+      transition:all .3s;font-size:10.5px;
+    }
+    .region-item.firing{
+      border-color:var(--accent);
+      background:rgba(78,140,255,0.12);
+      box-shadow:0 0 10px rgba(78,140,255,0.18);
+    }
+    .region-item.go{border-color:var(--green);background:rgba(0,229,160,0.06);}
+    .region-item.nogo{border-color:var(--red);background:rgba(255,77,109,0.06);}
+    .ri-icon{font-size:13px;width:20px;text-align:center;}
+    .ri-info{flex:1;}
+    .ri-name{font-weight:600;font-size:10px;}
+    .ri-sub{font-size:9px;color:var(--text-dim);margin-top:1px;}
+    .ri-badge{
+      font-size:8.5px;font-family:var(--mono);
+      padding:2px 6px;border-radius:8px;
+      background:rgba(255,255,255,0.05);color:var(--text-dim);
+    }
+    .ri-badge.on{background:rgba(0,229,160,0.12);color:var(--green);}
+    .ri-badge.warn{background:rgba(255,122,61,0.12);color:var(--orange);}
+
+    /* ── Neuromodulator Waveform Section ──────────────── */
+    .nm-section{margin-bottom:12px;}
+    .nm-section-title{
+      font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+      color:var(--text-dim);margin-bottom:6px;
+    }
+    .nm-grid{display:flex;flex-direction:column;gap:8px;}
+    .nm-item{display:flex;flex-direction:column;gap:3px;}
+    .nm-label{display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);}
+    .nm-name{font-weight:600;}
+    .nm-val{color:var(--text-dim);}
+    .nm-track{
+      height:5px;border-radius:8px;
+      background:rgba(255,255,255,0.05);overflow:hidden;position:relative;
+    }
+    .nm-fill{height:100%;border-radius:8px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+    .nm-da  .nm-fill{background:linear-gradient(90deg,#ff7a3d,#ffc94d);}
+    .nm-se  .nm-fill{background:linear-gradient(90deg,#00e5a0,#4e8cff);}
+    .nm-ne  .nm-fill{background:linear-gradient(90deg,#4e8cff,#8b52ff);}
+    .nm-ach .nm-fill{background:linear-gradient(90deg,#ff5eb0,#ff7a3d);}
+    .nm-wave{
+      height:28px;margin-top:2px;
+      display:flex;align-items:flex-end;gap:1.5px;
+    }
+    .nm-wave-bar{
+      flex:1;border-radius:2px 2px 0 0;
+      transition:height .4s ease;min-height:2px;
+    }
+    .nm-da  .nm-wave-bar{background:rgba(255,122,61,0.5);}
+    .nm-se  .nm-wave-bar{background:rgba(0,229,160,0.5);}
+    .nm-ne  .nm-wave-bar{background:rgba(78,140,255,0.5);}
+    .nm-ach .nm-wave-bar{background:rgba(255,94,176,0.5);}
+
+    /* ── Chat Panel ───────────────────────────────────── */
+    .chat-panel{
+      display:flex;flex-direction:column;
+      background:rgba(4,6,15,0.55);overflow:hidden;
+    }
+    .chat-header{
+      padding:10px 18px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:8px;flex-shrink:0;
+    }
+    .path-badge{
+      font-size:9.5px;font-weight:700;font-family:var(--mono);
+      padding:3px 9px;border-radius:20px;
+      background:rgba(78,140,255,0.12);color:var(--accent);border:1px solid var(--border-h);
+    }
+    .verify-badge{
+      font-size:9px;font-family:var(--mono);
+      padding:2px 8px;border-radius:20px;
+      font-weight:600;
+    }
+    .verify-badge.pass{background:rgba(0,229,160,0.1);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
+    .verify-badge.fail{background:rgba(255,77,109,0.1);color:var(--red);border:1px solid rgba(255,77,109,0.2);}
+    .session-badge{font-family:var(--mono);font-size:9.5px;color:var(--text-dim);margin-left:auto;}
+    .messages{
+      flex:1;overflow-y:auto;padding:18px;
+      display:flex;flex-direction:column;gap:14px;
+      scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+    }
+    .message{display:flex;flex-direction:column;gap:4px;max-width:88%;animation:msgIn .3s ease;}
+    .message.user{align-self:flex-end;}
+    .message.ai  {align-self:flex-start;}
+    @keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+    .msg-meta{display:flex;align-items:center;gap:6px;padding:0 4px;}
+    .msg-role{font-size:9.5px;font-weight:700;color:var(--text-dim);text-transform:uppercase;font-family:var(--mono);}
+    .msg-conf{
+      font-size:9px;font-family:var(--mono);
+      padding:1px 6px;border-radius:8px;
+    }
+    .msg-conf.high{background:rgba(0,229,160,0.12);color:var(--green);}
+    .msg-conf.medium{background:rgba(255,201,77,0.12);color:var(--yellow);}
+    .msg-conf.low{background:rgba(255,122,61,0.12);color:var(--orange);}
+    .msg-conf.uncertain{background:rgba(255,77,109,0.12);color:var(--red);}
+    .msg-bubble{
+      padding:11px 15px;border-radius:14px;
+      font-size:13px;line-height:1.65;
+    }
+    .message.user .msg-bubble{
+      background:linear-gradient(135deg,rgba(78,140,255,0.2),rgba(139,82,255,0.15));
+      border:1px solid rgba(78,140,255,0.25);border-radius:14px 14px 4px 14px;
+    }
+    .message.ai .msg-bubble{
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border);border-radius:14px 14px 14px 4px;
+    }
+    .msg-bubble p{margin-bottom:.5em;}
+    .msg-bubble p:last-child{margin-bottom:0;}
+    .msg-bubble code{
+      font-family:var(--mono);font-size:11.5px;
+      background:rgba(78,140,255,0.12);padding:1px 5px;border-radius:4px;
+    }
+    .msg-bubble pre{
+      background:rgba(0,0,0,0.4);padding:10px 12px;border-radius:8px;
+      overflow-x:auto;font-family:var(--mono);font-size:11.5px;
+      border:1px solid var(--border);margin:.5em 0;
+    }
+    .msg-bubble pre code{background:none;padding:0;}
+    .msg-bubble h1,.msg-bubble h2,.msg-bubble h3{color:var(--accent);margin:.6em 0 .3em;}
+    .msg-bubble ul,.msg-bubble ol{padding-left:1.4em;margin:.4em 0;}
+    /* Monologue (DMN stages) */
+    .monologue-btn{
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:9.5px;font-family:var(--mono);
+      color:var(--text-dim);cursor:pointer;margin-top:6px;padding:3px 8px;
+      border-radius:10px;border:1px solid var(--border);
+      background:rgba(255,255,255,0.02);transition:all .2s;
+    }
+    .monologue-btn:hover{background:rgba(78,140,255,0.08);border-color:var(--border-h);color:var(--accent);}
+    .monologue-panel{
+      margin-top:6px;border-radius:10px;
+      border:1px solid var(--border);overflow:hidden;
+      display:none;animation:slideDown .2s ease;
+    }
+    .monologue-panel.open{display:block;}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+    .mono-tabs{display:flex;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);}
+    .mono-tab{
+      flex:1;padding:7px;font-size:9px;font-weight:700;font-family:var(--mono);
+      text-align:center;cursor:pointer;color:var(--text-dim);transition:all .2s;
+      text-transform:uppercase;letter-spacing:.5px;
+    }
+    .mono-tab.active{color:var(--accent);background:rgba(78,140,255,0.08);}
+    .mono-tab:nth-child(1).active{color:#5b8cff;}
+    .mono-tab:nth-child(2).active{color:#8b52ff;}
+    .mono-tab:nth-child(3).active{color:#ff5eb0;}
+    .mono-content{
+      padding:10px 12px;font-size:11px;line-height:1.6;
+      font-family:var(--mono);color:var(--text-mid);max-height:180px;overflow-y:auto;
+      display:none;
+    }
+    .mono-content.active{display:block;}
+    /* Feedback */
+    .msg-actions{display:flex;gap:6px;padding:0 4px;margin-top:3px;}
+    .fb-btn{
+      font-size:11px;cursor:pointer;padding:3px 7px;border-radius:8px;
+      border:1px solid var(--border);background:rgba(255,255,255,0.02);
+      color:var(--text-dim);transition:all .2s;
+    }
+    .fb-btn:hover.pos{background:rgba(0,229,160,0.1);border-color:rgba(0,229,160,0.25);color:var(--green);}
+    .fb-btn:hover.neg{background:rgba(255,77,109,0.1);border-color:rgba(255,77,109,0.25);color:var(--red);}
+    /* Input */
+    .input-area{
+      padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0;
+      background:rgba(4,6,15,0.7);
+    }
+    .input-row{
+      display:flex;gap:8px;align-items:flex-end;
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border);border-radius:14px;
+      padding:8px 14px;transition:border-color .2s;
+    }
+    .input-row:focus-within{border-color:var(--border-h);}
+    textarea#msgInput{
+      flex:1;background:transparent;border:none;outline:none;
+      font-family:'Inter',sans-serif;font-size:13px;
+      color:var(--text);resize:none;max-height:120px;
+      line-height:1.5;min-height:22px;
+    }
+    textarea#msgInput::placeholder{color:var(--text-dim);}
+    .send-btn{
+      padding:7px 16px;border-radius:10px;border:none;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;font-weight:700;font-size:12px;
+      transition:opacity .2s;flex-shrink:0;
+    }
+    .send-btn:hover{opacity:.85;}
+    .send-btn:disabled{opacity:.4;cursor:not-allowed;}
+    .input-meta{
+      display:flex;gap:10px;margin-top:7px;font-size:10px;color:var(--text-dim);
+      font-family:var(--mono);
+    }
+    .input-meta span{display:flex;align-items:center;gap:4px;}
+
+    /* ── Right Panel ──────────────────────────────────── */
+    .right-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .right-tab{
+      flex:1;padding:9px 4px;font-size:9.5px;font-weight:700;font-family:var(--mono);
+      text-align:center;cursor:pointer;color:var(--text-dim);transition:all .2s;
+      text-transform:uppercase;letter-spacing:.5px;
+      border-bottom:2px solid transparent;
+    }
+    .right-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .right-body{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin;}
+    .right-section{display:none;}
+    .right-section.active{display:block;}
+
+    /* ── Pipeline Trace ───────────────────────────────── */
+    .trace-list{display:flex;flex-direction:column;gap:3px;}
+    .trace-item{
+      padding:6px 10px;border-radius:6px;
+      border-left:2px solid var(--border-h);
+      font-size:10px;font-family:var(--mono);
+      background:rgba(78,140,255,0.04);
+      animation:slideIn .25s ease;
+    }
+    @keyframes slideIn{from{opacity:0;transform:translateX(-5px);}to{opacity:1;transform:none;}}
+    .t-region{font-weight:700;color:var(--accent);}
+    .t-detail{color:var(--text-dim);margin-top:2px;}
+    .trace-item.cerebellum{border-color:var(--accent3);}
+    .trace-item.cerebellum .t-region{color:var(--accent3);}
+    .trace-item.bica{border-color:var(--accent2);}
+    .trace-item.bica .t-region{color:var(--accent2);}
+    .trace-item.basal{border-color:var(--yellow);}
+    .trace-item.basal .t-region{color:var(--yellow);}
+    .trace-item.verified{border-color:var(--green);}
+
+    /* ── BICA Cognitive State Panel ───────────────────── */
+    .bica-grid{display:flex;flex-direction:column;gap:8px;}
+    .bica-module{
+      padding:8px 10px;border-radius:8px;
+      border:1px solid var(--border);
+      background:rgba(139,82,255,0.04);
+    }
+    .bica-module-title{
+      font-size:9.5px;font-weight:700;font-family:var(--mono);
+      color:var(--accent2);margin-bottom:5px;
+      text-transform:uppercase;letter-spacing:.7px;
+      display:flex;align-items:center;gap:6px;
+    }
+    .bica-module-body{font-size:10.5px;color:var(--text-mid);line-height:1.5;}
+    .bica-tag{
+      display:inline-block;padding:1px 6px;border-radius:6px;
+      font-size:9px;font-family:var(--mono);margin:2px 2px 0 0;
+      background:rgba(139,82,255,0.12);color:var(--accent2);
+    }
+    .bica-tag.green{background:rgba(0,229,160,0.1);color:var(--green);}
+    .bica-tag.orange{background:rgba(255,122,61,0.1);color:var(--orange);}
+    .bica-tag.red{background:rgba(255,77,109,0.1);color:var(--red);}
+    .bica-pass{color:var(--green);font-weight:700;}
+    .bica-fail{color:var(--red);font-weight:700;}
+
+    /* ── Brain Stats ──────────────────────────────────── */
+    .stats-grid{display:flex;flex-direction:column;gap:10px;}
+    .stat-block{
+      padding:8px 10px;border-radius:8px;
+      border:1px solid var(--border);background:rgba(255,255,255,0.02);
+    }
+    .stat-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:6px;}
+    .stat-rows{display:flex;flex-direction:column;gap:4px;}
+    .stat-row{display:flex;justify-content:space-between;font-size:10.5px;font-family:var(--mono);}
+    .stat-key{color:var(--text-dim);}
+    .stat-val{color:var(--text-mid);font-weight:600;}
+
+    /* ── Sleep Modal ──────────────────────────────────── */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,0.7);
+      backdrop-filter:blur(8px);z-index:100;
+      display:none;align-items:center;justify-content:center;
+    }
+    .modal-backdrop.open{display:flex;}
+    .modal{
+      background:var(--bg3);border:1px solid var(--border-h);
+      border-radius:16px;padding:28px;width:380px;
+      animation:modalIn .25s ease;
+    }
+    @keyframes modalIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+    .modal h3{font-size:16px;margin-bottom:8px;background:linear-gradient(90deg,var(--accent2),var(--accent));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .modal p{font-size:12.5px;color:var(--text-mid);line-height:1.6;margin-bottom:16px;}
+    .modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+    .modal-btn{
+      padding:8px 18px;border-radius:10px;border:none;cursor:pointer;
+      font-size:12px;font-weight:600;transition:opacity .2s;
+    }
+    .modal-btn.cancel{background:rgba(255,255,255,0.06);color:var(--text);}
+    .modal-btn.confirm{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;}
+    .modal-btn:hover{opacity:.8;}
+
+    /* ── Toast Notification ───────────────────────────── */
+    #toast{
+      position:fixed;bottom:20px;right:20px;z-index:200;
+      background:rgba(10,15,30,0.95);border:1px solid var(--border-h);
+      border-radius:10px;padding:10px 16px;
+      font-size:12px;font-family:var(--mono);color:var(--text);
+      max-width:280px;opacity:0;transform:translateY(8px);
+      transition:all .3s ease;pointer-events:none;
+    }
+    #toast.show{opacity:1;transform:translateY(0);}
+
+    /* ── Typing Indicator ────────────────────────────── */
+    .typing{display:none;align-items:center;gap:4px;padding:8px 12px;
+            border-radius:14px;background:rgba(255,255,255,0.04);
+            border:1px solid var(--border);align-self:flex-start;margin-bottom:2px;}
+    .typing.active{display:flex;}
+    .typing-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);
+                animation:typeDot 1.2s infinite;}
+    .typing-dot:nth-child(2){animation-delay:.2s;}
+    .typing-dot:nth-child(3){animation-delay:.4s;}
+    @keyframes typeDot{0%,80%,100%{transform:scale(1);opacity:.5;}40%{transform:scale(1.3);opacity:1;}}
+
+    /* ── Confidence Ring ─────────────────────────────── */
+    .conf-ring{
+      width:12px;height:12px;border-radius:50%;
+      display:inline-block;margin-right:3px;vertical-align:middle;
+      border:2px solid;
+    }
+    .conf-ring.high{border-color:var(--green);background:rgba(0,229,160,0.2);}
+    .conf-ring.medium{border-color:var(--yellow);background:rgba(255,201,77,0.2);}
+    .conf-ring.low{border-color:var(--orange);background:rgba(255,122,61,0.2);}
+    .conf-ring.uncertain{border-color:var(--red);background:rgba(255,77,109,0.2);}
+
+    /* ── Thinking Spinner ─────────────────────────────── */
+    .thinking{display:flex;align-items:center;gap:8px;padding:10px 14px;
+              border:1px solid var(--border);border-radius:14px;
+              background:rgba(255,255,255,0.03);align-self:flex-start;
+              font-size:11px;color:var(--text-dim);font-family:var(--mono);}
+    .spin{width:12px;height:12px;border:2px solid rgba(78,140,255,0.3);
+          border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* ── Suggestions ─────────────────────────────────── */
+    .suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 10px;}
+    .sugg{
+      font-size:10.5px;padding:5px 12px;border-radius:20px;
+      border:1px solid var(--border-h);background:rgba(78,140,255,0.06);
+      color:var(--accent);cursor:pointer;transition:all .2s;
+    }
+    .sugg:hover{background:rgba(78,140,255,0.15);}
+
+    /* ── Plan Progress Bar ───────────────────────────── */
+    .plan-bar{
+      margin:6px 0;padding:8px 10px;border-radius:8px;
+      border:1px solid rgba(0,212,170,0.2);background:rgba(0,212,170,0.04);
+      font-size:10.5px;font-family:var(--mono);color:var(--accent3);
+    }
+    .plan-progress{
+      height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:5px;overflow:hidden;
+    }
+    .plan-progress-fill{height:100%;background:var(--accent3);border-radius:2px;transition:width .6s ease;}
+
+    /* ── Mobile Responsive Styles ─────────────────────── */
+    .mobile-nav {
+      display: none;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      height: 58px;
+      align-items: center;
+      justify-content: space-around;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+      height: 100%;
+      transition: all 0.2s;
+      border-top: 2px solid transparent;
+    }
+    .mobile-nav-item.active {
+      color: var(--accent);
+      background: rgba(78, 140, 255, 0.04);
+      border-top-color: var(--accent);
+    }
+    .mobile-nav-item.active.purple {
+      color: var(--accent2);
+      border-top-color: var(--accent2);
+      background: rgba(139, 82, 255, 0.04);
+    }
+    .mobile-nav-item.active.green {
+      color: var(--green);
+      border-top-color: var(--green);
+      background: rgba(0, 229, 160, 0.04);
+    }
+    .mobile-nav-item .m-icon {
+      font-size: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 14px;
+      }
+      .topbar-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+      }
+      .logo-sub {
+        display: none;
+      }
+      .topbar-pills {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        gap: 5px;
+        overflow-x: auto;
+        margin-left: 0;
+      }
+      .pill {
+        flex: 1;
+        text-align: center;
+        padding: 5px 3px;
+        font-size: 9px;
+        white-space: nowrap;
+      }
+      .main {
+        grid-template-columns: 1fr !important;
+        position: relative;
+        flex: 1;
+        height: auto;
+      }
+      .panel, .chat-panel {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: none !important;
+        border: none !important;
+      }
+      .panel.active-panel, .chat-panel.active-panel {
+        display: flex !important;
+      }
+      .mobile-nav {
+        display: flex;
+      }
+      /* Adjust right tabs for small screens */
+      .right-tab {
+        font-size: 8.5px;
+        padding: 8px 2px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Bar ───────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="topbar-header-row">
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div>
+        <div class="logo h1" style="background:linear-gradient(90deg,#4e8cff,#8b52ff);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:15px;font-weight:700;">BICA v3</div>
+        <div class="logo-sub">Biologically-Inspired Cognitive Architecture</div>
+      </div>
+    </div>
+    <div class="dreamer-pill" id="dreamerPill" onclick="toggleDreamer()">
+      <div class="d-dot"></div><span id="dreamerLabel">Dreamer</span>
+    </div>
+  </div>
+  <div class="topbar-pills">
+    <button class="pill purple" onclick="openSleepModal()">💤 Sleep</button>
+    <button class="pill green"  onclick="refreshBrainStats()">⟳ Sync</button>
+    <button class="pill"        onclick="newSession()">＋ Session</button>
+    <button class="pill red"    onclick="clearChat()">✕ Clear</button>
+  </div>
+</div>
+
+<!-- ── Main Layout ────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- ═══════════ LEFT PANEL — Brain Map + NM ═══════════ -->
+  <div class="panel" id="leftPanel">
+    <div class="ph">
+      <div class="dot" style="background:#4e8cff;"></div>
+      <span class="ph-title">Brain Map</span>
+      <div class="ph-tabs">
+        <div class="ph-tab active" onclick="setLeftTab('regions',this)">Regions</div>
+        <div class="ph-tab" onclick="setLeftTab('neuro',this)">NM</div>
+      </div>
+    </div>
+
+    <!-- Canvas visualization -->
+    <div class="pb" id="leftBody" style="padding:10px;">
+      <canvas id="brainCanvas" height="200"></canvas>
+
+      <!-- Regions Tab -->
+      <div id="leftTab-regions">
+        <div class="region-list" id="regionList"></div>
+      </div>
+
+      <!-- Neuromodulators Tab -->
+      <div id="leftTab-neuro" style="display:none;">
+        <div class="nm-section">
+          <div class="nm-section-title">Neuromodulators · Live</div>
+          <div class="nm-grid">
+            <div class="nm-item nm-da" id="nm-dopamine">
+              <div class="nm-label"><span class="nm-name">Dopamine</span><span class="nm-val" id="nm-da-val">0.350</span></div>
+              <div class="nm-track"><div class="nm-fill" id="nm-da-fill" style="width:35%"></div></div>
+              <div class="nm-wave" id="nm-da-wave"></div>
+            </div>
+            <div class="nm-item nm-se" id="nm-serotonin">
+              <div class="nm-label"><span class="nm-name">Serotonin</span><span class="nm-val" id="nm-se-val">0.600</span></div>
+              <div class="nm-track"><div class="nm-fill" id="nm-se-fill" style="width:60%"></div></div>
+              <div class="nm-wave" id="nm-se-wave"></div>
+            </div>
+            <div class="nm-item nm-ne" id="nm-norepinephrine">
+              <div class="nm-label"><span class="nm-name">Norepineph.</span><span class="nm-val" id="nm-ne-val">0.500</span></div>
+              <div class="nm-track"><div class="nm-fill" id="nm-ne-fill" style="width:50%"></div></div>
+              <div class="nm-wave" id="nm-ne-wave"></div>
+            </div>
+            <div class="nm-item nm-ach" id="nm-acetylcholine">
+              <div class="nm-label"><span class="nm-name">Acetylcholine</span><span class="nm-val" id="nm-ach-val">0.550</span></div>
+              <div class="nm-track"><div class="nm-fill" id="nm-ach-fill" style="width:55%"></div></div>
+              <div class="nm-wave" id="nm-ach-wave"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nm-section">
+          <div class="nm-section-title">Cognitive State</div>
+          <div class="stat-block">
+            <div class="stat-rows">
+              <div class="stat-row"><span class="stat-key">Load</span><span class="stat-val" id="cogLoad">—</span></div>
+              <div class="stat-row"><span class="stat-key">Confidence</span><span class="stat-val" id="cogConf">—</span></div>
+              <div class="stat-row"><span class="stat-key">Strategy</span><span class="stat-val" id="cogStrategy">—</span></div>
+              <div class="stat-row"><span class="stat-key">Path</span><span class="stat-val" id="lastPath">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ CENTRE — Chat ═══════════ -->
+  <div class="chat-panel active-panel" id="chatPanel">
+    <div class="chat-header">
+      <span style="font-size:11px;font-weight:600;color:var(--text-mid);">🔬 Session</span>
+      <div class="path-badge" id="pathBadge">IDLE</div>
+      <div class="verify-badge pass" id="verifyBadge" style="display:none"></div>
+      <div class="session-badge" id="sessionBadge">—</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="message ai">
+        <div class="msg-meta"><span class="msg-role">BICA</span></div>
+        <div class="msg-bubble">
+          <strong>BICA v3 — Biologically-Inspired Cognitive Architecture</strong><br><br>
+          I process every message through <strong>25 brain regions</strong> including:<br>
+          • 🎯 Thalamus → Amygdala → BICA Cognition (perception, attention, semantic reasoning)<br>
+          • 🧬 Cerebellum (timing), Basal Ganglia (Go/No-Go), PlanningPFC (multi-step goals)<br>
+          • 💭 Default Mode Network (3-stage: Recall → Simulate → Critique + Self-Verification)<br>
+          • 🌙 Autonomous Dreamer + Sleep Consolidation + Hebbian Plasticity<br><br>
+          Ask me anything! Watch the brain visualization light up with each response. 🧠
+        </div>
+      </div>
+    </div>
+
+    <div class="typing" id="typing">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text-dim);margin-left:4px;">Processing…</span>
+    </div>
+
+    <div class="suggestions" id="suggestions"></div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="msgInput" placeholder="Message BICA…" rows="1"
+                  oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+      </div>
+      <div class="input-meta">
+        <span>⌨ Enter to send · Shift+Enter for newline</span>
+        <span id="tokenHint"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RIGHT PANEL — Tabs ═══════════ -->
+  <div class="panel" id="rightPanel">
+    <div class="right-tabs" id="rightTabs">
+      <div class="right-tab active" onclick="setRightTab('trace',this)">Trace</div>
+      <div class="right-tab" onclick="setRightTab('bica',this)">BICA</div>
+      <div class="right-tab" onclick="setRightTab('stats',this)">Stats</div>
+      <div class="right-tab" onclick="setRightTab('memory',this)">Memory</div>
+    </div>
+
+    <div class="right-body" id="rightBody">
+
+      <!-- Pipeline Trace -->
+      <div class="right-section active" id="rightTab-trace">
+        <div class="trace-list" id="traceList">
+          <div style="font-size:10.5px;color:var(--text-dim);text-align:center;padding:20px 0;">
+            Send a message to see the brain pipeline trace.
+          </div>
+        </div>
+      </div>
+
+      <!-- BICA Cognitive State -->
+      <div class="right-section" id="rightTab-bica">
+        <div class="bica-grid" id="bicaPanel">
+          <div style="font-size:10.5px;color:var(--text-dim);text-align:center;padding:20px 0;">
+            BICA cognitive state will appear here after your first message.
+          </div>
+        </div>
+      </div>
+
+      <!-- Brain Stats -->
+      <div class="right-section" id="rightTab-stats">
+        <div class="stats-grid" id="statsPanel">
+          <div class="stat-block">
+            <div class="stat-title">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Inspector -->
+      <div class="right-section" id="rightTab-memory">
+        <div id="memoryPanel">
+          <div class="stat-block">
+            <div class="stat-title">Memory Topics</div>
+            <div class="stat-rows" id="memTopics">
+              <div style="font-size:10.5px;color:var(--text-dim);">No memories yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div><!-- end .main -->
+
+<!-- ── Mobile Navigation Bar ────────────────────────────── -->
+<div class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-item active" onclick="switchMobileTab('chat', this)">
+    <span class="m-icon">💬</span>
+    <span class="m-lbl">Chat</span>
+  </div>
+  <div class="mobile-nav-item purple" onclick="switchMobileTab('brain', this)">
+    <span class="m-icon">🧠</span>
+    <span class="m-lbl">Brain Map</span>
+  </div>
+  <div class="mobile-nav-item green" onclick="switchMobileTab('trace', this)">
+    <span class="m-icon">🔬</span>
+    <span class="m-lbl">Cog State</span>
+  </div>
+</div>
+
+<!-- ── Sleep Modal ──────────────────────────────────────── -->
+<div class="modal-backdrop" id="sleepModal">
+  <div class="modal">
+    <h3>💤 Sleep Consolidation</h3>
+    <p>Triggers a 4-phase biological sleep cycle:<br>
+    NREM→SWS→REM→Integration. High-priority memories are replayed, neuromodulators reset to baseline, and Hebbian synaptic decay is applied.</p>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeSleepModal()">Cancel</button>
+      <button class="modal-btn confirm" onclick="triggerSleep()">Begin Sleep</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let sessionId  = 'bica-' + Date.now();
+let msgCounter = 0;
+let lastBrainState = {};
+let lastPath   = 'IDLE';
+let firingRegions = new Set();
+
+// Neuromodulator history for waveforms (last 20 turns)
+const NM_HISTORY = { dopamine:[], serotonin:[], norepinephrine:[], acetylcholine:[] };
+const MAX_WAVE   = 20;
+
+// ═══════════════════════════════════════════════════════
+//  SESSION
+// ═══════════════════════════════════════════════════════
+function initSession(){
+  document.getElementById('sessionBadge').textContent = sessionId.slice(-12);
+  refreshBrainStats();
+  updateDreamerStatus();
+  setInterval(updateDreamerStatus, 8000);
+  setInterval(refreshBrainStats,  30000);
+  initCanvas();
+}
+
+function newSession(){
+  sessionId = 'bica-' + Date.now();
+  document.getElementById('sessionBadge').textContent = sessionId.slice(-12);
+  clearChat(true);
+  showToast('New session started: ' + sessionId.slice(-10));
+}
+
+function clearChat(silent){
+  const m = document.getElementById('messages');
+  m.innerHTML = '';
+  document.getElementById('suggestions').innerHTML = '';
+  if(!silent) showToast('Chat cleared.');
+}
+
+// ═══════════════════════════════════════════════════════
+//  BRAIN CANVAS
+// ═══════════════════════════════════════════════════════
+const BRAIN_NODES = [
+  { id:'thalamus',       x:.50, y:.12, emoji:'👁', label:'Thalamus',    color:'#4e8cff' },
+  { id:'amygdala',       x:.18, y:.28, emoji:'❤', label:'Amygdala',    color:'#ff4d6d' },
+  { id:'prefrontal_cortex',x:.82,y:.28, emoji:'🎯', label:'PFC',         color:'#8b52ff' },
+  { id:'hippocampus',    x:.25, y:.55, emoji:'🌀', label:'Hippo',       color:'#00e5a0' },
+  { id:'dmn',            x:.75, y:.55, emoji:'💭', label:'DMN',         color:'#8b52ff' },
+  { id:'cerebellum',     x:.12, y:.75, emoji:'⏱', label:'Cerebellum',  color:'#00d4aa' },
+  { id:'basal_ganglia',  x:.38, y:.78, emoji:'⚙', label:'Basal G.',    color:'#ffc94d' },
+  { id:'bica_cognition', x:.62, y:.78, emoji:'🧬', label:'BICA',        color:'#ff5eb0' },
+  { id:'neocortex',      x:.88, y:.75, emoji:'🔬', label:'Neocortex',   color:'#4e8cff' },
+  { id:'acc',            x:.50, y:.88, emoji:'🔄', label:'ACC/Flex',    color:'#ff7a3d' },
+];
+const EDGES = [
+  ['thalamus','amygdala'],['thalamus','prefrontal_cortex'],
+  ['amygdala','hippocampus'],['prefrontal_cortex','dmn'],
+  ['hippocampus','dmn'],['hippocampus','basal_ganglia'],
+  ['dmn','neocortex'],['basal_ganglia','bica_cognition'],
+  ['bica_cognition','dmn'],['cerebellum','basal_ganglia'],
+  ['acc','prefrontal_cortex'],['neocortex','acc'],
+  ['thalamus','bica_cognition'],
+];
+
+let canvas, ctx, cw, ch;
+function initCanvas(){
+  canvas = document.getElementById('brainCanvas');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  drawBrain();
+  setInterval(drawBrain, 80);
+}
+function resizeCanvas(){
+  const panel = document.getElementById('leftBody');
+  cw = canvas.width  = panel.clientWidth - 20;
+  ch = canvas.height = Math.min(cw * 0.75, 200);
+}
+function drawBrain(){
+  if(!ctx){ ctx = canvas.getContext('2d'); }
+  ctx.clearRect(0, 0, cw, ch);
+
+  const t = Date.now() / 1000;
+
+  // Draw edges
+  EDGES.forEach(([a, b]) => {
+    const na = BRAIN_NODES.find(n => n.id === a);
+    const nb = BRAIN_NODES.find(n => n.id === b);
+    if(!na || !nb) return;
+    const ax = na.x * cw, ay = na.y * ch;
+    const bx = nb.x * cw, by = nb.y * ch;
+    const bothFiring = firingRegions.has(a) && firingRegions.has(b);
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    if(bothFiring){
+      ctx.strokeStyle = `rgba(78,140,255,${0.4 + 0.3 * Math.sin(t * 6)})`;
+      ctx.lineWidth   = 1.5;
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth   = 0.8;
+    }
+    ctx.stroke();
+  });
+
+  // Draw nodes
+  BRAIN_NODES.forEach(node => {
+    const x = node.x * cw;
+    const y = node.y * ch;
+    const firing = firingRegions.has(node.id);
+    const r = firing ? 14 : 11;
+
+    if(firing){
+      // Glow
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
+      grd.addColorStop(0, node.color + '55');
+      grd.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(x, y, r * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+      // Pulse ring
+      const pulse = (Math.sin(t * 8) + 1) / 2;
+      ctx.beginPath();
+      ctx.arc(x, y, r + 4 + pulse * 4, 0, Math.PI * 2);
+      ctx.strokeStyle = node.color + '60';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Circle
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = firing ? node.color + 'dd' : node.color + '30';
+    ctx.fill();
+    ctx.strokeStyle = firing ? node.color : node.color + '60';
+    ctx.lineWidth = firing ? 1.5 : 1;
+    ctx.stroke();
+
+    // Emoji
+    ctx.font = `${firing ? 11 : 9}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(node.emoji, x, y);
+
+    // Label
+    ctx.font = `600 8px Inter, sans-serif`;
+    ctx.fillStyle = firing ? node.color : 'rgba(255,255,255,0.35)';
+    ctx.fillText(node.label, x, y + r + 7);
+  });
+}
+
+function flashRegions(regionNames, durationMs = 2000){
+  regionNames.forEach(r => {
+    const mapped = r.toLowerCase().replace(/ /g,'_');
+    firingRegions.add(mapped);
+  });
+  setTimeout(() => {
+    regionNames.forEach(r => firingRegions.delete(r.toLowerCase().replace(/ /g,'_')));
+  }, durationMs);
+}
+
+// ═══════════════════════════════════════════════════════
+//  REGION LIST (left panel)
+// ═══════════════════════════════════════════════════════
+const REGION_META = {
+  thalamus:         { emoji:'👁', name:'Thalamus',            sub:'Sensory Filter' },
+  amygdala:         { emoji:'❤', name:'Amygdala',            sub:'Emotional Tagger' },
+  hippocampus:      { emoji:'🌀', name:'Hippocampus',         sub:'Episodic Memory' },
+  prefrontal_cortex:{ emoji:'🎯', name:'Prefrontal Cortex',   sub:'Working & Plan' },
+  dmn:              { emoji:'💭', name:'DMN',                  sub:'Imagination' },
+  neocortex:        { emoji:'🔬', name:'Neocortex',            sub:'Schema Store' },
+  cerebellum:       { emoji:'⏱', name:'Cerebellum',           sub:'Timing & Sequence' },
+  basal_ganglia:    { emoji:'⚙', name:'Basal Ganglia',        sub:'Go / No-Go Gate' },
+  acc:              { emoji:'🔄', name:'ACC / Flex',           sub:'Set-Shift & Strategy' },
+  tpj:              { emoji:'🫂', name:'Theory of Mind',       sub:'User Model' },
+  parietal:         { emoji:'📐', name:'Parietal Lobe',        sub:'Math & Spatial' },
+  bica_cognition:   { emoji:'🧬', name:'BICA Cognition',       sub:'10-Module Cognitive Engine' },
+};
+
+function buildRegionList(regionsData){
+  const list = document.getElementById('regionList');
+  list.innerHTML = '';
+  Object.entries(REGION_META).forEach(([id, meta]) => {
+    const rData = (regionsData || {})[id] || {};
+    const firing = firingRegions.has(id);
+    const div = document.createElement('div');
+    div.className = 'region-item' + (firing ? ' firing' : '');
+    div.id = 'region-' + id;
+
+    let badge = '<div class="ri-badge on">ON</div>';
+    let extraSub = '';
+    if(id === 'basal_ganglia'){
+      const go   = rData.go_count   || 0;
+      const nogo = rData.nogo_count || 0;
+      extraSub = `Go:${go} / NoGo:${nogo}`;
+      badge = `<div class="ri-badge${nogo>0?' warn':' on'}">${nogo>0?'⚠ Gate':'✓ Pass'}</div>`;
+    } else if(id === 'cerebellum'){
+      const pc = rData.perseveration_count || 0;
+      extraSub = pc > 0 ? `Persev:${pc}` : '';
+    }
+
+    div.innerHTML = `
+      <div class="ri-icon">${meta.emoji}</div>
+      <div class="ri-info">
+        <div class="ri-name">${meta.name}</div>
+        <div class="ri-sub">${meta.sub}${extraSub ? ' · ' + extraSub : ''}</div>
+      </div>
+      ${badge}`;
+    list.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  SEND MESSAGE
+// ═══════════════════════════════════════════════════════
+async function sendMessage(){
+  const input = document.getElementById('msgInput');
+  const text  = input.value.trim();
+  if(!text) return;
+
+  input.value = '';
+  autoResize(input);
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('suggestions').innerHTML = '';
+
+  appendMessage('user', text);
+
+  // Show thinking indicator
+  const thinkDiv = document.createElement('div');
+  thinkDiv.className = 'thinking';
+  thinkDiv.id = 'thinkingMsg';
+  thinkDiv.innerHTML = '<div class="spin"></div><span>Processing through 25 brain regions…</span>';
+  document.getElementById('messages').appendChild(thinkDiv);
+  scrollToBottom();
+
+  // Flash thalamus + amygdala first
+  flashRegions(['thalamus','amygdala'], 800);
+
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: sessionId, message: text, max_tokens: 300 })
+    });
+    const data = await res.json();
+
+    document.getElementById('thinkingMsg')?.remove();
+    handleChatResponse(data, text);
+  } catch(e){
+    document.getElementById('thinkingMsg')?.remove();
+    appendMessage('ai', '⚠ Network error: ' + e.message);
+  } finally {
+    document.getElementById('sendBtn').disabled = false;
+    input.focus();
+  }
+}
+
+function handleChatResponse(data, userMsg){
+  msgCounter++;
+  const mid = 'msg-' + msgCounter;
+
+  // Update top bar
+  lastPath = data.path || 'DEEP';
+  document.getElementById('pathBadge').textContent = lastPath;
+  document.getElementById('lastPath').textContent = lastPath;
+
+  // Confidence
+  const conf = data.confidence || 0.5;
+  const confLabel = conf >= .8 ? 'high' : conf >= .55 ? 'medium' : conf >= .3 ? 'low' : 'uncertain';
+  document.getElementById('cogLoad').textContent = ((data.cognitive_load || 0) * 100).toFixed(0) + '%';
+  document.getElementById('cogConf').textContent = (conf * 100).toFixed(0) + '%';
+  document.getElementById('cogStrategy').textContent = data.active_strategy || '—';
+
+  // Verification badge
+  const vb = document.getElementById('verifyBadge');
+  const sv = data.self_verification || {};
+  if(sv.label){
+    vb.textContent = sv.label;
+    vb.className   = 'verify-badge ' + (sv.passed ? 'pass' : 'fail');
+    vb.style.display = '';
+  }
+
+  // Brain state → NM waveforms
+  const bs = data.brain_state || {};
+  updateNM(bs);
+
+  // Pipeline trace
+  renderTrace(data.pipeline_trace || [], data);
+
+  // Flash regions from trace
+  const traceRegions = (data.pipeline_trace || []).map(t => t.region);
+  flashRegions(traceRegions, 3000);
+
+  // Append AI message
+  appendAiMessage(data, mid, userMsg, conf, confLabel);
+
+  // Suggestions
+  renderSuggestions(data.suggestions || []);
+
+  // Plan progress
+  if(data.plan_status){
+    renderPlanStatus(data.plan_status);
+  }
+
+  // Update BICA panel
+  if(data.bica_cognition){
+    renderBicaPanel(data);
+  }
+
+  // Refresh stats async
+  setTimeout(refreshBrainStats, 500);
+}
+
+// ── Markdown + KaTeX rendering pipeline ────────────────
+function renderMarkdownWithMath(text) {
+  if (!text) return '';
+
+  try {
+    const mathBlocks = [];
+    
+    // 1. Preprocess non-standard delimiters:
+    // Convert [ math ] to \[ math \] ONLY if content looks genuinely mathematical
+    // (must contain a LaTeX command OR be purely symbolic without prose words)
+    let processed = text.replace(/\[\s*([^\]]+?)\s*\]/g, (match, p1) => {
+      const hasLatexCmd = /\\[a-zA-Z]+/.test(p1);          // has \frac, \sum, etc.
+      const hasProse = /[a-zA-Z]{4,}/.test(p1);             // has a word 4+ chars
+      const isSymbolic = /^[\d\s\+\-\*\/\=\^\_{}\.\(\)]+$/.test(p1.trim()); // purely symbolic
+      if ((hasLatexCmd || isSymbolic) && !hasProse) {
+        return '\\[' + p1 + '\\]';
+      }
+      return match;
+    });
+    
+    // Convert ( \frac... ) to \( \frac... \)
+    processed = processed.replace(/\(\s*(\\frac[^)]+?)\s*\)/g, (match, p1) => {
+      return '\\(' + p1 + '\\)';
+    });
+    
+    // Convert (( math )) to \( math \)
+    processed = processed.replace(/\(\(\s*([\s\S]+?)\s*\)\)/g, (match, p1) => {
+      return '\\(' + p1 + '\\)';
+    });
+
+    // Auto-close truncated math blocks
+    const lastDisplayOpen = processed.lastIndexOf('\\[');
+    const lastDisplayClose = processed.lastIndexOf('\\]');
+    if (lastDisplayOpen > lastDisplayClose) {
+      processed += ' \\]';
+    }
+    const lastInlineOpen = processed.lastIndexOf('\\(');
+    const lastInlineClose = processed.lastIndexOf('\\)');
+    if (lastInlineOpen > lastInlineClose) {
+      processed += ' \\)';
+    }
+
+    // Temporary place-holder generator
+    function addPlaceholder(math, isDisplay) {
+      const placeholder = `%%MATH_PH_${mathBlocks.length}%%`;
+      mathBlocks.push({ math, isDisplay, placeholder });
+      return placeholder;
+    }
+
+    // 2. Replace math blocks with placeholders (in order of specificity):
+    // Display math: $$ ... $$
+    processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (match, p1) => addPlaceholder(p1, true));
+    // Display math: \[ ... \]
+    processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (match, p1) => addPlaceholder(p1, true));
+    // Inline math: \( ... \)
+    processed = processed.replace(/\\\(([\s\S]+?)\\\)/g, (match, p1) => addPlaceholder(p1, false));
+    // Inline math: $ ... $ (must not span multiple lines)
+    processed = processed.replace(/\$([^\$\n]+?)\$/g, (match, p1) => addPlaceholder(p1, false));
+
+    // 3. Run Markdown parser (with CDN presence check)
+    let html = '';
+    if (typeof marked !== 'undefined') {
+      if (typeof marked.parse === 'function') {
+        html = marked.parse(processed);
+      } else if (typeof marked === 'function') {
+        html = marked(processed);
+      } else {
+        html = processed;
+      }
+    } else {
+      html = processed;
+    }
+
+    // 4. Swap placeholders back with rendered KaTeX HTML (with CDN presence check)
+    mathBlocks.forEach(({ math, isDisplay, placeholder }) => {
+      try {
+        if (typeof katex !== 'undefined') {
+          const decodedPlaceholder = placeholder.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+          const renderedHtml = katex.renderToString(math.trim(), {
+            displayMode: isDisplay,
+            throwOnError: false
+          });
+          
+          html = html.replace(placeholder, renderedHtml)
+                     .replace(decodedPlaceholder, renderedHtml);
+        } else {
+          const fallback = isDisplay ? `\\[${math}\\]` : `\\(${math}\\)`;
+          html = html.replace(placeholder, escHtml(fallback));
+        }
+      } catch (err) {
+        console.warn("KaTeX render error:", err);
+        const fallback = isDisplay ? `\\[${math}\\]` : `\\(${math}\\)`;
+        html = html.replace(placeholder, escHtml(fallback));
+      }
+    });
+
+    return html;
+  } catch (e) {
+    console.error("renderMarkdownWithMath failed, falling back to raw text:", e);
+    return escHtml(text);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  APPEND MESSAGE
+// ═══════════════════════════════════════════════════════
+function appendMessage(role, text){
+  try {
+    const m = document.createElement('div');
+    m.className = 'message ' + role;
+    m.innerHTML = `
+      <div class="msg-meta">
+        <span class="msg-role">${role === 'user' ? 'YOU' : 'BICA'}</span>
+      </div>
+      <div class="msg-bubble">${role === 'ai' ? renderMarkdownWithMath(text) : escHtml(text)}</div>`;
+    document.getElementById('messages').appendChild(m);
+    scrollToBottom();
+  } catch (err) {
+    console.error("appendMessage failed:", err);
+  }
+}
+
+function appendAiMessage(data, mid, userMsg, conf, confLabel){
+  try {
+    const m = document.createElement('div');
+    m.className = 'message ai';
+    m.id = mid;
+
+    const sv = data.self_verification || {};
+    const monologue = data.monologue || {};
+    // Fallback if monologue keys are stage1/stage2/stage3
+    const mRecall = monologue.stage1_recall || monologue.stage1 || "";
+    const mSimulate = monologue.stage2_simulate || monologue.stage2 || "";
+    const mCritique = monologue.stage3_critique || monologue.stage3 || "";
+    const hasMonologue = mRecall || mSimulate || mCritique;
+    
+    const cbInfo = data.cerebellum || {};
+    const bgInfo = data.basal_ganglia || {};
+
+    let metaExtra = '';
+    if(cbInfo.query_type) metaExtra += `<span class="bica-tag">${cbInfo.query_type}</span>`;
+    if(sv.label)          metaExtra += `<span class="bica-tag ${sv.passed?'green':'red'}">${sv.label}</span>`;
+    if(bgInfo.go === false) metaExtra += `<span class="bica-tag orange">⚠ No-Go</span>`;
+
+    let monoHtml = '';
+    if(hasMonologue){
+      monoHtml = `
+        <div class="monologue-btn" onclick="toggleMonologue('${mid}')">
+          🧩 Inner Monologue <span id="mono-chevron-${mid}">▶</span>
+        </div>
+        <div class="monologue-panel" id="mono-${mid}">
+          <div class="mono-tabs">
+            <div class="mono-tab active" onclick="setMonoTab('${mid}',0,this)">RECALL</div>
+            <div class="mono-tab" onclick="setMonoTab('${mid}',1,this)">SIMULATE</div>
+            <div class="mono-tab" onclick="setMonoTab('${mid}',2,this)">CRITIQUE</div>
+          </div>
+          <div class="mono-content active" id="mono-${mid}-0">${escHtml(mRecall||'—')}</div>
+          <div class="mono-content" id="mono-${mid}-1">${escHtml(mSimulate||'—')}</div>
+          <div class="mono-content" id="mono-${mid}-2">${escHtml(mCritique||'—')}</div>
+        </div>`;
+    }
+
+    m.innerHTML = `
+      <div class="msg-meta">
+        <span class="conf-ring ${confLabel}"></span>
+        <span class="msg-role">BICA</span>
+        <span class="msg-conf ${confLabel}">${(conf*100).toFixed(0)}%</span>
+        ${metaExtra}
+      </div>
+      <div class="msg-bubble">${renderMarkdownWithMath(data.response||'')}</div>
+      ${monoHtml}
+      <div class="msg-actions">
+        <button class="fb-btn pos" onclick="sendFeedback('${mid}',true,'${escJs(userMsg)}','${escJs(data.response||'')}')">👍</button>
+        <button class="fb-btn neg" onclick="sendFeedback('${mid}',false,'${escJs(userMsg)}','${escJs(data.response||'')}')">👎</button>
+        ${data.was_web_searched ? '<span style="font-size:10px;color:var(--accent3);font-family:var(--mono);">🌐 web</span>' : ''}
+      </div>`;
+
+    document.getElementById('messages').appendChild(m);
+    scrollToBottom();
+  } catch (err) {
+    console.error("appendAiMessage failed:", err);
+    // Simple fallback to make sure something is displayed
+    try {
+      const m = document.createElement('div');
+      m.className = 'message ai';
+      m.id = mid;
+      m.innerHTML = `
+        <div class="msg-meta">
+          <span class="msg-role">BICA</span>
+        </div>
+        <div class="msg-bubble">${escHtml(data.response || 'No response')}</div>`;
+      document.getElementById('messages').appendChild(m);
+      scrollToBottom();
+    } catch (e) {
+      console.error("Ultimate fallback failed:", e);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  PIPELINE TRACE
+// ═══════════════════════════════════════════════════════
+function renderTrace(trace, data){
+  const list = document.getElementById('traceList');
+  list.innerHTML = '';
+
+  trace.forEach(step => {
+    const div = document.createElement('div');
+    const rLow = (step.region||'').toLowerCase();
+    let cls = 'trace-item';
+    if(rLow.includes('cerebellum')) cls += ' cerebellum';
+    else if(rLow.includes('bica'))   cls += ' bica';
+    else if(rLow.includes('basal'))  cls += ' basal';
+    else if(step.verified)           cls += ' verified';
+    div.className = cls;
+
+    const details = Object.entries(step)
+      .filter(([k]) => k !== 'region')
+      .map(([k,v]) => `${k}: ${typeof v === 'number' ? v.toFixed ? v.toFixed(3) : v : v}`)
+      .join(' · ');
+    div.innerHTML = `<div class="t-region">${step.region}</div><div class="t-detail">${details}</div>`;
+    list.appendChild(div);
+  });
+
+  // Add summary row
+  if(data.prediction_error !== undefined){
+    const div = document.createElement('div');
+    div.className = 'trace-item';
+    div.style.borderColor = 'var(--accent2)';
+    div.innerHTML = `<div class="t-region" style="color:var(--accent2)">Summary</div>
+      <div class="t-detail">error:${(data.prediction_error||0).toFixed(3)} · conf:${((data.confidence||0)*100).toFixed(0)}% · load:${((data.cognitive_load||0)*100).toFixed(0)}%</div>`;
+    list.appendChild(div);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  BICA COGNITIVE PANEL
+// ═══════════════════════════════════════════════════════
+function renderBicaPanel(data){
+  const bc = data.bica_cognition || {};
+  const sv = data.self_verification || {};
+  const cb = data.cerebellum || {};
+  const bg = data.basal_ganglia || {};
+
+  const html = `
+    <div class="bica-module">
+      <div class="bica-module-title">🔍 Perception</div>
+      <div class="bica-module-body">
+        ${bc.primary_goal ? `<div>Goal: <strong>${bc.primary_goal}</strong></div>` : ''}
+        ${bc.entities && bc.entities.length ? '<div>Entities: ' + bc.entities.map(e=>`<span class="bica-tag">${e}</span>`).join('') + '</div>' : ''}
+        <div>
+          <span class="bica-tag ${bc.is_question?'green':''}">Q: ${bc.is_question?'yes':'no'}</span>
+          <span class="bica-tag ${bc.multi_step?'orange':''}">Multi-step: ${bc.multi_step?'yes':'no'}</span>
+          ${bc.has_rules ? '<span class="bica-tag orange">⚡ User rules</span>' : ''}
+          ${bc.contradiction ? '<span class="bica-tag red">⚠ Contradiction</span>' : ''}
+        </div>
+      </div>
+    </div>
+    <div class="bica-module">
+      <div class="bica-module-title">✓ Self-Verification</div>
+      <div class="bica-module-body">
+        <span class="${sv.passed ? 'bica-pass' : 'bica-fail'}">${sv.label || '—'}</span>
+        ${sv.issues && sv.issues.length ? '<div style="margin-top:4px;">' + sv.issues.map(i=>`<div style="color:var(--orange);font-size:10px;">• ${i}</div>`).join('') + '</div>' : ''}
+      </div>
+    </div>
+    <div class="bica-module">
+      <div class="bica-module-title">⏱ Cerebellum</div>
+      <div class="bica-module-body">
+        <div>Query type: <span class="bica-tag">${cb.query_type||'—'}</span></div>
+        <div>Length: <span class="bica-tag ${cb.length_verdict==='ok'?'green':cb.length_verdict?'orange':''}">${cb.length_verdict||'—'}</span></div>
+        <div>Perseverating: <span class="bica-tag ${cb.perseverating?'red':'green'}">${cb.perseverating?'YES':'NO'}</span></div>
+      </div>
+    </div>
+    <div class="bica-module">
+      <div class="bica-module-title">⚙ Basal Ganglia</div>
+      <div class="bica-module-body">
+        <div>Go/No-Go: <span class="bica-tag ${bg.go!==false?'green':'red'}">${bg.go!==false?'✓ GO':'✗ NO-GO'}</span></div>
+        <div>Gate: <span class="bica-tag">${bg.gate||'pass'}</span></div>
+      </div>
+    </div>`;
+
+  document.getElementById('bicaPanel').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+//  NEUROMODULATOR WAVEFORMS
+// ═══════════════════════════════════════════════════════
+function updateNM(bs){
+  const mods = { dopamine:'da', serotonin:'se', norepinephrine:'ne', acetylcholine:'ach' };
+  Object.entries(mods).forEach(([mod, abbr]) => {
+    const v = bs[mod];
+    if(v === undefined) return;
+    document.getElementById(`nm-${abbr}-val`).textContent = v.toFixed(3);
+    document.getElementById(`nm-${abbr}-fill`).style.width = (v * 100) + '%';
+
+    // Add to history
+    NM_HISTORY[mod].push(v);
+    if(NM_HISTORY[mod].length > MAX_WAVE) NM_HISTORY[mod].shift();
+
+    // Render wave
+    const wave = document.getElementById(`nm-${abbr}-wave`);
+    wave.innerHTML = '';
+    const history = NM_HISTORY[mod];
+    const minH = 2, maxH = 28;
+    history.forEach(val => {
+      const bar = document.createElement('div');
+      bar.className = 'nm-wave-bar';
+      bar.style.height = (minH + val * (maxH - minH)) + 'px';
+      wave.appendChild(bar);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  BRAIN STATS
+// ═══════════════════════════════════════════════════════
+async function refreshBrainStats(){
+  try {
+    const [statsRes, mapRes, memRes] = await Promise.all([
+      fetch(`/api/brain_stats/${sessionId}`),
+      fetch(`/api/brain_map/${sessionId}`),
+      fetch(`/api/memory_inspector`),
+    ]);
+    const [stats, brainMap, memory] = await Promise.all([
+      statsRes.json(), mapRes.json(), memRes.json()
+    ]);
+
+    // Update NM if no recent chat data
+    if(brainMap.neuromodulators){
+      updateNM(brainMap.neuromodulators);
+    }
+    if(brainMap.cognitive_load !== undefined){
+      document.getElementById('cogLoad').textContent = ((brainMap.cognitive_load||0)*100).toFixed(0) + '%';
+    }
+    if(brainMap.confidence !== undefined){
+      document.getElementById('cogConf').textContent = ((brainMap.confidence||0)*100).toFixed(0) + '%';
+    }
+    if(brainMap.active_strategy){
+      document.getElementById('cogStrategy').textContent = brainMap.active_strategy;
+    }
+
+    // Region list
+    buildRegionList(brainMap.regions);
+
+    // Stats panel
+    renderStatsPanel(stats, brainMap);
+
+    // Memory
+    renderMemoryPanel(memory);
+
+  } catch(e){ console.warn('refreshBrainStats:', e); }
+}
+
+function renderStatsPanel(stats, brainMap){
+  const sp = document.getElementById('statsPanel');
+
+  const nm = stats.neuromodulators || {};
+  const rows = (obj) => Object.entries(obj).map(([k,v]) =>
+    `<div class="stat-row"><span class="stat-key">${k}</span><span class="stat-val">${typeof v === 'number' ? v.toFixed(3) : v}</span></div>`
+  ).join('');
+
+  sp.innerHTML = `
+    <div class="stat-block">
+      <div class="stat-title">Neuromodulators</div>
+      <div class="stat-rows">${rows(nm)}</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-title">Metacognition</div>
+      <div class="stat-rows">${rows(stats.metacognition||{})}</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-title">Semantic Graph</div>
+      <div class="stat-rows">${rows(stats.semantic_graph||{})}</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-title">Active Plan</div>
+      <div class="stat-rows">
+        ${stats.active_plan ? `
+          <div class="stat-row"><span class="stat-key">Status</span><span class="stat-val">${stats.active_plan.status}</span></div>
+          <div class="stat-row"><span class="stat-key">Steps</span><span class="stat-val">${stats.active_plan.current_step_idx+1}/${stats.active_plan.steps.length}</span></div>
+        ` : '<div class="stat-row"><span class="stat-key">—</span><span class="stat-val">No active plan</span></div>'}
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-title">Brain Map · Regions</div>
+      <div class="stat-rows">
+        ${Object.entries(brainMap.regions||{}).map(([id,r]) =>
+          `<div class="stat-row"><span class="stat-key">${id.replace(/_/g,' ')}</span><span class="stat-val">${r.label}</span></div>`
+        ).join('')}
+      </div>
+    </div>`;
+}
+
+function renderMemoryPanel(mem){
+  const topics = mem.topics || [];
+  const schema = mem.schema || {};
+  const mp = document.getElementById('memTopics');
+
+  if(!topics.length){
+    mp.innerHTML = '<div style="font-size:10.5px;color:var(--text-dim);">No memories yet.</div>';
+    return;
+  }
+  mp.innerHTML = topics.slice(0,20).map(t =>
+    `<div class="stat-row"><span class="stat-key" style="font-size:10px;">💾</span><span class="stat-val" style="font-size:10px;">${t}</span></div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SUGGESTIONS + PLAN
+// ═══════════════════════════════════════════════════════
+function renderSuggestions(suggestions){
+  const s = document.getElementById('suggestions');
+  s.innerHTML = suggestions.map(sg =>
+    `<div class="sugg" onclick="quickSend('${escJs(sg)}')">${escHtml(sg)}</div>`
+  ).join('');
+}
+
+function renderPlanStatus(plan){
+  const msg = document.getElementById('messages');
+  const existing = document.getElementById('planBar');
+  if(existing) existing.remove();
+  if(!plan || plan.status === 'completed') return;
+  const pct = Math.round((plan.current_step / plan.total_steps) * 100);
+  const div = document.createElement('div');
+  div.id = 'planBar';
+  div.className = 'plan-bar';
+  div.innerHTML = `
+    <strong>📋 Plan Step ${plan.current_step}/${plan.total_steps}</strong>
+    <div class="plan-progress"><div class="plan-progress-fill" style="width:${pct}%"></div></div>`;
+  msg.appendChild(div);
+  scrollToBottom();
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEEDBACK
+// ═══════════════════════════════════════════════════════
+async function sendFeedback(mid, positive, topic, snippet){
+  await fetch('/api/feedback', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      session_id: sessionId, message_id: mid,
+      positive, topic: topic.slice(0,40), response_snippet: snippet.slice(0,80)
+    })
+  });
+  showToast(positive ? '👍 Positive feedback recorded' : '👎 Negative feedback recorded');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SLEEP
+// ═══════════════════════════════════════════════════════
+function openSleepModal(){ document.getElementById('sleepModal').classList.add('open'); }
+function closeSleepModal(){ document.getElementById('sleepModal').classList.remove('open'); }
+
+async function triggerSleep(){
+  closeSleepModal();
+  showToast('💤 Sleep consolidation started…');
+  flashRegions(['hippocampus','neocortex','dmn','acc'], 4000);
+  const res = await fetch('/api/sleep', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ session_id: sessionId, max_iters: 20 })
+  });
+  const data = await res.json();
+  showToast('💤 Sleep initiated: ' + data.message);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DREAMER
+// ═══════════════════════════════════════════════════════
+async function updateDreamerStatus(){
+  try {
+    const r = await fetch('/api/dreamer');
+    const d = await r.json();
+    const pill = document.getElementById('dreamerPill');
+    const lbl  = document.getElementById('dreamerLabel');
+    if(!d.running || d.paused){
+      pill.classList.remove('active');
+      lbl.textContent = 'Dreamer: OFF';
+    } else {
+      pill.classList.add('active');
+      lbl.textContent = d.is_dreaming ? 'Dreamer: ACTIVE' : 'Dreamer: ON';
+      if(d.last_dream) flashRegions(['dmn','hippocampus'], 1500);
+    }
+  } catch(e){}
+}
+
+async function toggleDreamer(){
+  await fetch('/api/dreamer/toggle', { method:'POST' });
+  updateDreamerStatus();
+}
+
+// ═══════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════
+function setLeftTab(name, el){
+  document.querySelectorAll('.ph-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('leftTab-regions').style.display = name==='regions' ? '' : 'none';
+  document.getElementById('leftTab-neuro').style.display   = name==='neuro'   ? '' : 'none';
+}
+
+function setRightTab(name, el){
+  document.querySelectorAll('.right-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.right-section').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('rightTab-' + name).classList.add('active');
+}
+
+function switchMobileTab(tabName, el){
+  // Remove active state from all mobile nav items
+  document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+  // Add active to clicked item
+  el.classList.add('active');
+
+  // Remove active class from all main panels
+  const leftPanel = document.getElementById('leftPanel');
+  const chatPanel = document.getElementById('chatPanel');
+  const rightPanel = document.getElementById('rightPanel');
+
+  leftPanel.classList.remove('active-panel');
+  chatPanel.classList.remove('active-panel');
+  rightPanel.classList.remove('active-panel');
+
+  // Add active-panel to correct view
+  if (tabName === 'chat') {
+    chatPanel.classList.add('active-panel');
+    setTimeout(scrollToBottom, 50);
+  } else if (tabName === 'brain') {
+    leftPanel.classList.add('active-panel');
+    setTimeout(() => {
+      resizeCanvas();
+      drawBrain();
+    }, 50);
+  } else if (tabName === 'trace') {
+    rightPanel.classList.add('active-panel');
+  }
+}
+
+function toggleMonologue(mid){
+  const panel = document.getElementById('mono-' + mid);
+  const chevron = document.getElementById('mono-chevron-' + mid);
+  panel.classList.toggle('open');
+  chevron.textContent = panel.classList.contains('open') ? '▼' : '▶';
+}
+
+function setMonoTab(mid, idx, el){
+  el.closest('.monologue-panel').querySelectorAll('.mono-tab').forEach(t => t.classList.remove('active'));
+  el.closest('.monologue-panel').querySelectorAll('.mono-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`mono-${mid}-${idx}`).classList.add('active');
+}
+
+function autoResize(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+}
+
+function quickSend(text){
+  document.getElementById('msgInput').value = text;
+  sendMessage();
+}
+
+function scrollToBottom(){
+  const m = document.getElementById('messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+function showToast(msg, duration = 3000){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n').slice(0,100); }
+
+// ═══════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', initSession);
+</script>
+</body>
+</html>
