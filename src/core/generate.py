@@ -48,20 +48,24 @@ def get_model():
         print(f"[generate] Loading {MODEL_NAME}... (first load only)")
 
         # Force CPU on HF Spaces to avoid ZeroGPU thread allocation errors
+        # NOTE: do NOT use device_map on CPU — it requires accelerate even for CPU
         if "SPACE_ID" in os.environ:
-            device_map = "cpu"
-            dtype = torch.float32
             print("[generate] Running on Hugging Face Spaces - forcing CPU execution")
+            _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+            _model = AutoModelForCausalLM.from_pretrained(
+                MODEL_NAME,
+                torch_dtype=torch.float32,
+                low_cpu_mem_usage=False,   # avoid accelerate dependency
+            )
         else:
-            device_map = "auto"
+            device_map = "auto" if torch.cuda.is_available() else None
             dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            torch_dtype=dtype,
-            device_map=device_map,
-        )
+            _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+            _model = AutoModelForCausalLM.from_pretrained(
+                MODEL_NAME,
+                torch_dtype=dtype,
+                device_map=device_map,
+            )
         _model.eval()
         print(f"[generate] {MODEL_NAME} loaded and cached.")
 
