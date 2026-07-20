@@ -92,3 +92,12 @@ Thumbs.db
 deploy.ps1
 deploy_temp/
 
+# Unneeded runtime files
+data_collection.py
+Dockerfile
+tokenizer_bpe_training.py
+tests/
+static/ui_chat.png
+static/ui_monologue.png
+static/ui_stats.png
+
