@@ -46,7 +46,7 @@ def custom_create_app(cls, *args, **kwargs):
     app.mount("/ui", StaticFiles(directory="static"), name="static")
     
     # Prioritize BICA routes (/api/, /ui, /home) over Gradio routes to prevent Gradio wildcard interception
-    bica_prefixes = ("/api/", "/ui", "/home")
+    bica_prefixes = ("/bica/", "/bica", "/ui", "/home")
     bica_routes = []
     gradio_routes = []
     for r in app.routes:

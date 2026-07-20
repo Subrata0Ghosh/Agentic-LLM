@@ -178,7 +178,7 @@ def read_index():
     return FileResponse("static/index.html")
 
 
-@app.post("/api/chat")
+@app.post("/bica/chat")
 async def chat_endpoint(req: ChatRequest, background_tasks: BackgroundTasks):
     import traceback
     print(f"[api/chat] Received message: '{req.message}' for session {req.session_id}")
@@ -786,7 +786,7 @@ async def _chat_endpoint_inner(req: ChatRequest, background_tasks: BackgroundTas
 
 
 # ── Sleep Endpoint ─────────────────────────────────────────────────────────────
-@app.post("/api/sleep")
+@app.post("/bica/sleep")
 async def sleep_endpoint(req: SleepRequest, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
     background_jobs[job_id] = {
@@ -819,7 +819,7 @@ async def sleep_endpoint(req: SleepRequest, background_tasks: BackgroundTasks):
 
 
 # ── Feedback (Reward System) Endpoint ──────────────────────────────────────────
-@app.post("/api/feedback")
+@app.post("/bica/feedback")
 async def feedback_endpoint(req: FeedbackRequest):
     result = rwd.record_feedback(
         session_id=req.session_id,
@@ -839,7 +839,7 @@ async def feedback_endpoint(req: FeedbackRequest):
 
 
 # ── Vision (Visual Cortex) Endpoint ─────────────────────────────────────────────
-@app.post("/api/vision")
+@app.post("/bica/vision")
 async def vision_endpoint(req: VisionRequest):
     try:
         res = vcx.analyze(req.image_b64, candidate_labels=req.candidate_labels)
@@ -861,7 +861,7 @@ async def vision_endpoint(req: VisionRequest):
 
 
 # ── Episodic Timeline Endpoint ─────────────────────────────────────────────────
-@app.get("/api/timeline/{session_id}")
+@app.get("/bica/timeline/{session_id}")
 async def timeline_endpoint(session_id: str):
     events = tline.get_timeline_for_ui(session_id)
     summary = tline.get_session_summary(session_id)
@@ -869,7 +869,7 @@ async def timeline_endpoint(session_id: str):
 
 
 # ── Theory of Mind Endpoint ────────────────────────────────────────────────────
-@app.get("/api/user_model/{session_id}")
+@app.get("/bica/user_model/{session_id}")
 async def user_model_endpoint(session_id: str):
     profile = tom.get_generation_profile(session_id)
     summary = tom.get_user_summary(session_id)
@@ -877,11 +877,11 @@ async def user_model_endpoint(session_id: str):
 
 
 # ── Autonomous Dreamer Endpoint ────────────────────────────────────────────────
-@app.get("/api/dreamer")
+@app.get("/bica/dreamer")
 async def dreamer_endpoint():
     return dreamer.get_status()
 
-@app.post("/api/dreamer/toggle")
+@app.post("/bica/dreamer/toggle")
 async def dreamer_toggle_endpoint():
     status = dreamer.get_status()
     if status["paused"]:
@@ -893,13 +893,13 @@ async def dreamer_toggle_endpoint():
 
 
 # ── Metacognition Endpoint ─────────────────────────────────────────────────────
-@app.get("/api/metacog/{session_id}")
+@app.get("/bica/metacog/{session_id}")
 async def metacog_endpoint(session_id: str):
     return mcog.get_stats(session_id)
 
 
 # ── Brain Stats Endpoint ───────────────────────────────────────────────────────
-@app.get("/api/brain_stats/{session_id}")
+@app.get("/bica/brain_stats/{session_id}")
 async def brain_stats_endpoint(session_id: str):
     nm_state = nm.get_state(session_id)
     gen_params = nm.get_generation_params(session_id)
@@ -926,7 +926,7 @@ async def brain_stats_endpoint(session_id: str):
 
 
 # ── Brain Map (live state) ─────────────────────────────────────────────────────
-@app.get("/api/brain_map/{session_id}")
+@app.get("/bica/brain_map/{session_id}")
 async def brain_map(session_id: str):
     nm_s = nm.get_state(session_id)
     m_stats = mcog.get_stats(session_id)
@@ -964,13 +964,13 @@ async def brain_map(session_id: str):
 
 
 # ── Schema (Neocortex) Endpoint ────────────────────────────────────────────────
-@app.get("/api/schema")
+@app.get("/bica/schema")
 async def schema_endpoint():
     return neo.get_schema_summary()
 
 
 # ── Learn / Researcher ─────────────────────────────────────────────────────────
-@app.post("/api/learn")
+@app.post("/bica/learn")
 async def learn_endpoint(req: LearnRequest, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
     background_jobs[job_id] = {"status": "running", "topic": req.topic, "message": "Scraping..."}
@@ -999,7 +999,7 @@ async def learn_endpoint(req: LearnRequest, background_tasks: BackgroundTasks):
     return {"message": f"Learning '{req.topic}' with max encoding strength.", "job_id": job_id}
 
 
-@app.post("/api/read_paper")
+@app.post("/bica/read_paper")
 async def read_paper_endpoint(req: LearnRequest, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
     background_jobs[job_id] = {"status": "running", "topic": req.topic, "message": "Reading paper..."}
@@ -1017,13 +1017,13 @@ async def read_paper_endpoint(req: LearnRequest, background_tasks: BackgroundTas
     return {"message": f"Researching '{req.topic}'.", "job_id": job_id}
 
 
-@app.get("/api/job_status/{job_id}")
+@app.get("/bica/job_status/{job_id}")
 async def job_status(job_id: str):
     job = background_jobs.get(job_id)
     return job if job else {"status": "not_found"}
 
 
-@app.get("/api/memory_inspector")
+@app.get("/bica/memory_inspector")
 async def memory_inspector():
     sources = hipp.get_all_sources()
     schema = neo.get_schema_summary()
@@ -1032,7 +1032,7 @@ async def memory_inspector():
 
 # ── BICA v3 New Endpoints ────────────────────────────────────────────────────────
 
-@app.get("/api/cognitive_state/{session_id}")
+@app.get("/bica/cognitive_state/{session_id}")
 async def cognitive_state_endpoint(session_id: str):
     """
     Returns a unified snapshot of all 10 BICA cognitive module states.
@@ -1070,7 +1070,7 @@ async def cognitive_state_endpoint(session_id: str):
     }
 
 
-@app.get("/api/basal_ganglia/{session_id}")
+@app.get("/bica/basal_ganglia/{session_id}")
 async def basal_ganglia_endpoint(session_id: str):
     """
     Returns Basal Ganglia Go/No-Go stats for a session.
@@ -1079,7 +1079,7 @@ async def basal_ganglia_endpoint(session_id: str):
     return bg.get_stats(session_id)
 
 
-@app.get("/api/cerebellum/{session_id}")
+@app.get("/bica/cerebellum/{session_id}")
 async def cerebellum_endpoint(session_id: str):
     """
     Returns Cerebellum timing and perseveration stats for a session.
@@ -1098,7 +1098,7 @@ async def cerebellum_endpoint(session_id: str):
         },
     }
 
-@app.get("/api/debug_log")
+@app.get("/bica/debug_log")
 def debug_log():
     if os.path.exists("data/generation_debug.log"):
         with open("data/generation_debug.log", "r", encoding="utf-8") as f:

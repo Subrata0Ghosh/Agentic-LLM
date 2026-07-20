@@ -1098,7 +1098,7 @@ async function sendMessage(){
   flashRegions(['thalamus','amygdala'], 800);
 
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch('/bica/chat', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ session_id: sessionId, message: text, max_tokens: 300 })
@@ -1491,9 +1491,9 @@ function updateNM(bs){
 async function refreshBrainStats(){
   try {
     const [statsRes, mapRes, memRes] = await Promise.all([
-      fetch(`/api/brain_stats/${sessionId}`),
-      fetch(`/api/brain_map/${sessionId}`),
-      fetch(`/api/memory_inspector`),
+      fetch(`/bica/brain_stats/${sessionId}`),
+      fetch(`/bica/brain_map/${sessionId}`),
+      fetch(`/bica/memory_inspector`),
     ]);
     const [stats, brainMap, memory] = await Promise.all([
       statsRes.json(), mapRes.json(), memRes.json()
@@ -1609,7 +1609,7 @@ function renderPlanStatus(plan){
 //  FEEDBACK
 // ═══════════════════════════════════════════════════════
 async function sendFeedback(mid, positive, topic, snippet){
-  await fetch('/api/feedback', {
+  await fetch('/bica/feedback', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
@@ -1630,7 +1630,7 @@ async function triggerSleep(){
   closeSleepModal();
   showToast('💤 Sleep consolidation started…');
   flashRegions(['hippocampus','neocortex','dmn','acc'], 4000);
-  const res = await fetch('/api/sleep', {
+  const res = await fetch('/bica/sleep', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ session_id: sessionId, max_iters: 20 })
   });
@@ -1643,7 +1643,7 @@ async function triggerSleep(){
 // ═══════════════════════════════════════════════════════
 async function updateDreamerStatus(){
   try {
-    const r = await fetch('/api/dreamer');
+    const r = await fetch('/bica/dreamer');
     const d = await r.json();
     const pill = document.getElementById('dreamerPill');
     const lbl  = document.getElementById('dreamerLabel');
@@ -1659,7 +1659,7 @@ async function updateDreamerStatus(){
 }
 
 async function toggleDreamer(){
-  await fetch('/api/dreamer/toggle', { method:'POST' });
+  await fetch('/bica/dreamer/toggle', { method:'POST' });
   updateDreamerStatus();
 }
 
