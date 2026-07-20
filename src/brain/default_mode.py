@@ -76,14 +76,20 @@ class DefaultModeNetwork:
 
         elif stage == "SIMULATE":
             system = (
-                "You are an internal cognitive process — the brain's simulation stage. "
-                "Based on what was recalled, mentally simulate 2-3 possible answers or explanations. "
-                "Be creative but grounded. Think through consequences and implications. "
+                "You are an internal cognitive process — the brain's split-brain simulation stage. "
+                "You must simulate the query from two opposing viewpoints to resolve logic traps:\n"
+                "1. Simulation A (Proponent): Assume the user's query/premise is true or possible. Attempt to solve it or explain it under that assumption.\n"
+                "2. Simulation B (Skeptic): Actively look for logic flaws, false assumptions, contradictions, or physical impossibilities in the query.\n"
                 f"Recall results:\n{stage1_output}"
             )
             if bica_injection:
                 system += f"\n\n{bica_injection}"
-            user = f"Original question: {user_message}\n\nSimulate 2-3 possible answers or explanations:"
+            user = (
+                f"Original question: {user_message}\n\n"
+                "Please output both simulations under the following headers:\n"
+                "### Simulation A (Proponent) ###\n[Your positive attempt/solution]\n\n"
+                "### Simulation B (Skeptic) ###\n[Your skeptical/contradiction detection]"
+            )
 
         elif stage == "CRITIQUE":
             system = (
