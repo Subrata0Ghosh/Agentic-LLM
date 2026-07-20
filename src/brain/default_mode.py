@@ -236,68 +236,102 @@ class DefaultModeNetwork:
                                         temperature=temp,
                                         top_p=top_p, repetition_penalty=rep_p)
 
-        # Extract final synthesized answer from stage 3
-        # Look for a "Final Answer:", "Answer:", or "In conclusion:" marker
-        final = stage3
-        for marker in ["Final Answer:", "Synthesized Answer:", "In conclusion,",
-                        "Answer:", "Response:", "Therefore,"]:
-            if marker.lower() in stage3.lower():
-                idx = stage3.lower().index(marker.lower())
-                final = stage3[idx + len(marker):].strip()
+        # ── STAGE 3 SYNTHESIS + SELF-CORRECTION LOOP (Module 10) ──────────
+        max_attempts = 3
+        attempt = 0
+        current_msgs3 = msgs3.copy()
+        
+        while attempt < max_attempts:
+            # Extract final synthesized answer from stage 3
+            final = stage3
+            for marker in ["Final Answer:", "Synthesized Answer:", "In conclusion,",
+                            "Answer:", "Response:", "Therefore,"]:
+                if marker.lower() in stage3.lower():
+                    idx = stage3.lower().index(marker.lower())
+                    final = stage3[idx + len(marker):].strip()
+                    break
+
+            # Remove common internal monologue headers and leaked templates
+            clean_lines = []
+            for line in final.split("\n"):
+                line_l = line.strip().lower()
+                if any(h in line_l for h in [
+                    "original question analysis", "critique the simulations",
+                    "simulation a:", "simulation b:", "review of simulations",
+                    "decision making", "synthesized answer", "simulation 1:",
+                    "simulation 2:", "simulation 3:"
+                ]):
+                    continue
+                if line_l.startswith("• ") and any(x in line_l for x in ["option 1", "option 2", "simulation a", "simulation b"]):
+                    continue
+                clean_lines.append(line)
+            final = "\n".join(clean_lines).strip()
+
+            # Parse suggestions if present
+            suggestions = []
+            if "SUGGESTIONS:" in final:
+                parts = final.split("SUGGESTIONS:")
+                final = parts[0].strip()
+                for line in parts[1].split("\n"):
+                    line = line.strip()
+                    if line.startswith("- ") or line.startswith("* "):
+                        s = line[2:].replace("**", "").strip()
+                        if s:
+                            suggestions.append(s)
+
+            # Only fall back to raw stage3 if final was completely cleaned away (empty)
+            # Short responses like "Hi! How can I help?" are perfectly valid — don't overwrite them
+            if not final.strip():
+                final = stage3.replace("### Original Question Analysis", "").replace("### Synthesized Answer", "").strip()
+            # Last resort: if still empty, use a safe fallback
+            if not final.strip():
+                final = "I processed your message but wasn't able to compose a response. Please try rephrasing."
+
+            # ── SELF-VERIFICATION (BICA Module 10) ───────────────────────────
+            self_eval = {"passed": True, "issues": [], "label": "✓ Verified"}
+            if bica_state:
+                try:
+                    # Inline import to avoid circular dependency
+                    import sys, os
+                    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'brain'))
+                    from bica_cognition import BICACognition
+                    _bica = BICACognition()
+                    perception = bica_state.get("perception", {})
+                    self_eval = _bica.verify(user_message, final.strip(), perception)
+                except Exception:
+                    pass
+
+            # If verification passes, or we've run out of attempts, stop
+            if self_eval["passed"] or attempt == max_attempts - 1:
                 break
 
-        # Remove common internal monologue headers and leaked templates
-        clean_lines = []
-        for line in final.split("\n"):
-            line_l = line.strip().lower()
-            if any(h in line_l for h in [
-                "original question analysis", "critique the simulations",
-                "simulation a:", "simulation b:", "review of simulations",
-                "decision making", "synthesized answer", "simulation 1:",
-                "simulation 2:", "simulation 3:"
-            ]):
-                continue
-            if line_l.startswith("• ") and any(x in line_l for x in ["option 1", "option 2", "simulation a", "simulation b"]):
-                continue
-            clean_lines.append(line)
-        final = "\n".join(clean_lines).strip()
+            # Run self-correction: feed the issue back to stage3
+            attempt += 1
+            print(f"[DMN] Self-Verification failed on attempt {attempt}. Issues: {self_eval['issues']}. Correcting...")
+            
+            # Append failed response and issues as instruction feedback
+            current_msgs3.append({"role": "assistant", "content": stage3})
+            current_msgs3.append({
+                "role": "user",
+                "content": (
+                    f"Your response failed our internal BICA Module 10 verification with these issues:\n"
+                    + "\n".join([f"- {iss}" for iss in self_eval["issues"]])
+                    + "\n\nPlease rewrite the answer to resolve all issues listed above. "
+                    "Make sure your logic, arithmetic, and commonsense statements are 100% correct. "
+                    "Output ONLY your final, corrected response."
+                )
+            })
 
-        # Parse suggestions if present
-        suggestions = []
-        if "SUGGESTIONS:" in final:
-            parts = final.split("SUGGESTIONS:")
-            final = parts[0].strip()
-            for line in parts[1].split("\n"):
-                line = line.strip()
-                if line.startswith("- ") or line.startswith("* "):
-                    s = line[2:].replace("**", "").strip()
-                    if s:
-                        suggestions.append(s)
-
-        # Only fall back to raw stage3 if final was completely cleaned away (empty)
-        # Short responses like "Hi! How can I help?" are perfectly valid — don't overwrite them
-        if not final.strip():
-            final = stage3.replace("### Original Question Analysis", "").replace("### Synthesized Answer", "").strip()
-        # Last resort: if still empty, use a safe fallback
-        if not final.strip():
-            final = "I processed your message but wasn't able to compose a response. Please try rephrasing."
+            # Regenerate with slightly lower temperature to force higher determinism/logic compliance
+            stage3 = generate_text_api(
+                current_msgs3, 
+                max_new_tokens=400,
+                temperature=max(0.1, temp - 0.15 * attempt),
+                top_p=top_p, 
+                repetition_penalty=rep_p
+            )
 
         total_tokens = len((stage1 + stage2 + stage3).split())
-
-        # ── SELF-VERIFICATION (BICA Module 10) ───────────────────────────
-        self_eval = {"passed": True, "issues": [], "label": "✓ Verified"}
-        if bica_state:
-            try:
-                # Inline import to avoid circular dependency
-                import sys, os
-                sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'brain'))
-                from bica_cognition import BICACognition
-                _bica = BICACognition()
-                perception = bica_state.get("perception", {})
-                self_eval = _bica.verify(user_message, final.strip(), perception)
-            except Exception:
-                pass
-
         return {
             "stage1_recall":   stage1,
             "stage2_simulate": stage2,
